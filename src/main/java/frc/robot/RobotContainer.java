@@ -13,6 +13,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
+import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.generated.TunerConstants;
@@ -80,21 +81,32 @@ public class RobotContainer {
         arm.setDefaultCommand(
         arm.moveToAndStayAtPosition(Arm.ArmPosition.IDLE));
         coralHolder.setDefaultCommand(coralHolder.runVoltage(0));
-        operator.y().onTrue(Commands.sequence(
-            arm.moveToPosition(ArmPosition.RUN_UP),
-            elevator.runSetpointUntilReached(Meters.of(1.5)),//mag fixed
-            arm.moveToAndStayAtPosition(ArmPosition.SCORE_L4)
-                .alongWith(elevator.runSetpoint(Meters.of(1.5)))));
-                // .beforeStarting(() -> coralHolder.prepareToScoreL4().schedule())));
-        operator.a().onTrue(Commands.sequence(
-            arm.moveToPosition(ArmPosition.RUN_UP),
-            elevator.runSetpoint(Centimeters.of(3)),
-            arm.moveToPosition(ArmPosition.IDLE)));
-        operator.b().onTrue(Commands.sequence(
-            arm.moveToPosition(ArmPosition.IDLE),
-            elevator.runSetpoint(Meters.of(0.15)),//mag fixed
+
+        //IDLE position L1
+        operator.a().onTrue(Commands.sequence( 
+            arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(()->elevator.getCurrentHeight().in(Meter) > 0.9),
+            elevator.runSetpointUntilReached(Meters.of(0.39)).onlyIf(()->elevator.getCurrentHeight().in(Meter) > 0.9),
+            arm.moveToAndStayAtPosition(ArmPosition.IDLE).alongWith(elevator.runSetpoint(Centimeters.of(3)))));
+
+        //score position L2
+        operator.x().onTrue(Commands.sequence(
+            arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(()->elevator.getCurrentHeight().in(Meter) > 1.0),  
+            arm.moveToPosition(ArmPosition.SCORE).onlyIf(()->elevator.getCurrentHeight().in(Meter) > 0.39 && elevator.getCurrentHeight().in(Meter) <= 0.39),    //score position L2
             arm.moveToAndStayAtPosition(ArmPosition.SCORE)
-                .alongWith(elevator.runSetpoint(Meters.of(0.65)))));
+            .alongWith(elevator.runSetpoint(Meters.of(0.19)))));
+        //score position L3
+        operator.y().onTrue(Commands.sequence(
+            arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(()->elevator.getCurrentHeight().in(Meter) > 0.39), 
+            arm.moveToPosition(ArmPosition.SCORE).onlyIf(()->elevator.getCurrentHeight().in(Meter) <= 0.39), 
+            arm.moveToAndStayAtPosition(ArmPosition.SCORE)
+            .alongWith(elevator.runSetpoint(Meters.of(0.59))))); 
+            
+        //score position L4
+        operator.b().onTrue(Commands.sequence(
+            arm.moveToAndStayAtPosition(ArmPosition.SCORE_L4)
+                .alongWith(elevator.runSetpoint(Meters.of(1.21))))); 
+            elevator.runSetpointUntilReached(Meters.of(1.21));
+
         operator.leftTrigger(0.5).whileTrue(coralHolder.intakeCoralSequence().raceWith(
             arm.moveToAndStayAtPosition(Arm.ArmPosition.INTAKE),
             elevator.runSetpoint(Centimeters.of(3))));

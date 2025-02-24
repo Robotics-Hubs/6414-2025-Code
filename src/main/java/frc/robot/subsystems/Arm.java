@@ -33,7 +33,7 @@ public class Arm extends SubsystemBase {
 
     public enum ArmPosition {
         IDLE(116),
-        INTAKE(126),
+        INTAKE(125),
         SCORE(106),
         RUN_UP(55),
         SCORE_L4(70);
@@ -49,7 +49,7 @@ public class Arm extends SubsystemBase {
     private final StatusSignal<Angle> armAngle;
 
     private static final Angle tolerance = Degrees.of(4);
-    private final ArmFeedforward feedforwardController = new ArmFeedforward(0, 0.17, 1.2, 0.01);
+    private final ArmFeedforward feedforwardController = new ArmFeedforward(0, 0.17, 0.8, 0.01);
     private final PIDController strongFeedBackController = new PIDController(9.0/Math.toRadians(30), 0, 0);
     private final PIDController weakFeedBackController = new PIDController(3.0/Math.toRadians(30), 0, 0);
     private final TrapezoidProfile profile = new TrapezoidProfile(new TrapezoidProfile.Constraints(
@@ -138,7 +138,7 @@ public class Arm extends SubsystemBase {
             volts = 0;
         else if (getArmAngle().lt(lowerLimit) && volts < 0)
             volts = 0;
-        volts = MathUtil.clamp(volts, -6, 6);
+        volts = MathUtil.clamp(volts, -4, 4);
         armMotor.setControl(new VoltageOut(volts));
     }
 }

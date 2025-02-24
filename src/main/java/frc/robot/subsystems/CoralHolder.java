@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import au.grapplerobotics.LaserCan;
+import au.grapplerobotics.interfaces.LaserCanInterface;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
@@ -18,8 +19,8 @@ public class CoralHolder extends SubsystemBase {
     private final LaserCan firstSensor = new LaserCan(0);
     private final LaserCan secondSensor = new LaserCan(1);
     private final TalonFX rollerTalon = new TalonFX(61);
-    private final TalonFX intakel = new TalonFX(1,"rio");
-    private final TalonFX intaker = new TalonFX(2,"rio");
+    private final TalonFX intakeLeft = new TalonFX(1,"rio");
+    private final TalonFX intakeRight = new TalonFX(2,"rio");
     private final StatusSignal<Current> rollerMotorCurrent;
 
     private boolean firstSensorTriggered = false;
@@ -37,8 +38,8 @@ public class CoralHolder extends SubsystemBase {
 
     private void setVoltage(double volts) {
         this.rollerTalon.setControl(new VoltageOut(volts));
-        this.intakel.setControl(new VoltageOut(volts));
-        this.intaker.setControl(new VoltageOut(-volts));
+        this.intakeLeft.setControl(new VoltageOut(volts));
+        this.intakeRight.setControl(new VoltageOut(-volts));
     }
 
     @Override
@@ -57,7 +58,7 @@ public class CoralHolder extends SubsystemBase {
             return false;
         if (measurement.status != LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT)
             return false;
-        return measurement.distance_mm < 55;
+        return measurement.distance_mm < 30;
     }
 
     public boolean hasCoral() {
@@ -65,18 +66,18 @@ public class CoralHolder extends SubsystemBase {
     }
 
     public boolean coralInPlace() {
-        return firstSensorTriggered;
+        return firstSensorTriggered && secondSensorTriggered;
     }
 
-    public Command runVoltage(double volts) {
+    public Command runVoltage(double volts) { 
         return run(() -> setVoltage(volts));
     }
 
     public Command intakeCoralSequence() {
         return Commands.sequence(
-                // runVoltage(3.0).until(this::hasCoral),
-                // runVoltage(-0.5).withTimeout(0.1),
-                runVoltage(0.8).until(this::coralInPlace))
+                runVoltage(1.5).until(this::hasCoral),
+                runVoltage(-0.5).withTimeout(0.1),
+                runVoltage(0.6).until(this::coralInPlace))
                 .finallyDo(() -> setVoltage(0.0))
                 .onlyIf(() -> !this.coralInPlace());
     }

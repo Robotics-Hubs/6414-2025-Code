@@ -90,11 +90,14 @@ public class RobotContainer {
 
         drivetrain.registerTelemetry(logger::telemeterize);
 
-        // elevator.setDefaultCommand(elevator.applyRequest(this::getAxisY).andThen(Commands.waitUntil(() -> false)));
-        elevator.setDefaultCommand(elevator.runSetpointUntilReached(Meters.zero()).andThen(Commands.waitUntil(() -> false)));
+        /*
+          can not set default command, because clash with drive up and down, instead with button back + axis Y
+          elevator.setDefaultCommand(elevator.applyRequest(this::getAxisY).andThen(Commands.waitUntil(() -> false)));
+          elevator.setDefaultCommand(elevator.runSetpointUntilReached(Meters.zero()).andThen(Commands.waitUntil(() -> false)));
+        */
 
         arm.setDefaultCommand(
-                arm.moveToAndStayAtPosition(Arm.ArmPosition.IDLE).onlyIf(() -> arm.getCurrentAssignment() == Arm.Assignment.CORAL && elevator.getCurrentHeight().in(Meter) <= 0.29));
+                arm.moveToAndStayAtPosition(Arm.ArmPosition.IDLE).onlyIf(() -> arm.getCurrentAssignment() == Arm.Assignment.CORAL && elevator.getCurrentHeight().in(Meter) <= 0.19));
         coralHolder.setDefaultCommand(coralHolder.runVoltage(0));
 
         //IDLE position L1
@@ -130,7 +133,7 @@ public class RobotContainer {
                 elevator.runSetpointUntilReached(Meters.of(0.29)).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39),
                 coralHolder.intakeCoralSequence().raceWith(
                 arm.moveToAndStayAtPosition(Arm.ArmPosition.INTAKE),
-                elevator.runSetpoint(Centimeters.of(1)))
+                elevator.runSetpoint(Centimeters.of(0)))
         ));
 
         //score

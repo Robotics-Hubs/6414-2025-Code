@@ -61,24 +61,29 @@ public class RobotContainer {
                 )
         );
 
-        pilot.trigger().whileTrue(drivetrain.applyRequest(() -> brake));
-
-        //set coral score
-        pilot.button(3).onTrue(Commands.sequence(
-                arm.setAssignmentCoral()
-        ));
-
-        //set aglae score
-        pilot.button(4).onTrue(Commands.sequence(
-                arm.setAssignmentAlgae()
-        ));
-
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
         // joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
         // joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         // joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         // joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+
+        pilot.trigger().whileTrue(drivetrain.applyRequest(() -> brake));
+
+        //hold algae
+        pilot.button(2).onTrue(Commands.sequence(
+                arm.moveToPosition(ArmPosition.RUN_UP)
+        ));
+
+        //set coral score assignment
+        pilot.button(3).onTrue(Commands.sequence(
+                arm.setAssignmentCoral()
+        ));
+
+        //set algae score assignment
+        pilot.button(4).onTrue(Commands.sequence(
+                arm.setAssignmentAlgae()
+        ));
 
         // reset the field-centric heading on left bumper press
         operator.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
@@ -121,9 +126,11 @@ public class RobotContainer {
                         )));
 
         //intake
-        operator.leftTrigger(0.5).whileTrue(coralHolder.intakeCoralSequence().raceWith(
+        operator.leftTrigger(0.5).whileTrue(Commands.sequence(
+                elevator.runSetpointUntilReached(Meters.of(0.29)).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39),
+                coralHolder.intakeCoralSequence().raceWith(
                 arm.moveToAndStayAtPosition(Arm.ArmPosition.INTAKE),
-                elevator.runSetpoint(Centimeters.of(1))
+                elevator.runSetpoint(Centimeters.of(1)))
         ));
 
         //score

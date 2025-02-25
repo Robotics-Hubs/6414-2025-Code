@@ -8,11 +8,11 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
@@ -21,11 +21,11 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Robot;
 
 import java.util.Optional;
-import java.util.OptionalDouble;
-import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -99,7 +99,8 @@ public class Elevator extends SubsystemBase {
         currentState = profile.calculate(Robot.kDefaultPeriod, currentState, goal);
 
         double acceleration = (currentState.velocity - previousVelocityMPS) / Robot.kDefaultPeriod;
-        double feedforwardVolts = feedforwardController.calculate(currentState.velocity, acceleration);
+        double feedforwardVolts = feedforwardController.calculate(currentState.velocity);
+//        double feedforwardVolts = feedforwardController.calculate(currentState.velocity, acceleration);
         previousVelocityMPS = currentState.velocity;
         PIDController feedBackController = Math.abs(currentState.velocity) < 0.04 ?
                 weakFeedBackController
@@ -110,14 +111,14 @@ public class Elevator extends SubsystemBase {
         SmartDashboard.putNumber("Elevator FF Volts", feedforwardVolts);
         SmartDashboard.putNumber("Elevator FB Volts", feedbackVolts);
     }
-
-    private void runIdle() {
+    
+    public void runIdle() {
         this.currentState = new TrapezoidProfile.State(getCurrentHeight().in(Meters), 0);
         this.previousVelocityMPS = 0;
         runVoltage(Volts.zero());
     }
 
-    private void runVoltage(Voltage voltage) {
+    public void runVoltage(Voltage voltage) {
         if (isHigherLimitReached() && voltage.gt(Volts.zero()))
             voltage = Volts.zero();
         else if (isLowerLimitReached() && voltage.lt(Volts.zero()))
@@ -126,6 +127,9 @@ public class Elevator extends SubsystemBase {
         VoltageOut voltageOut = new VoltageOut(MathUtil.clamp(voltage.in(Volts), minOutputVoltage.in(Volts), maxOutputVoltage.in(Volts)));
         elevatorTalon1.setControl(voltageOut);
         elevatorTalon2.setControl(voltageOut);
+    }
+    public Command applyRequest(Supplier<Double> requestSupplier) {
+        return run(() -> runVoltage(Volts.of(requestSupplier.get() * maxOutputVoltage.in(Volts))));
     }
 
     private boolean isLowerLimitReached() {

@@ -28,15 +28,17 @@ public class Arm extends SubsystemBase {
     private static final double ARM_GEAR_RATIO = 44.0/16.0 * 20.0;
     private static final Rotation2d armActualStartingPosition = new Rotation2d(-166.32, 203.20); // measured from cad
 
-    private static final Angle lowerLimit = Degrees.of(30);
+    private static final Angle lowerLimit = Degrees.of(-40);
     private static final Angle upperLimit = Degrees.of(128);
 
     public enum ArmPosition {
         IDLE(116),
-        INTAKE(125),
+        INTAKE(126),
         SCORE(106),
         RUN_UP(55),
-        SCORE_L4(70);
+        SCORE_L4(70),
+        PICK_UP(35),
+        PUSH(-40);
 
         private final Angle angle;
         ArmPosition(double degrees) {
@@ -57,6 +59,11 @@ public class Arm extends SubsystemBase {
     private TrapezoidProfile.State state;
 
     private Angle setpoint;
+    public enum Assignment {
+        CORAL,
+        ALGAE
+    };
+    private Assignment currentAssignment = Assignment.CORAL;
     public Arm() {
         armMotor.getConfigurator().apply(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
 
@@ -117,7 +124,8 @@ public class Arm extends SubsystemBase {
         state = profile.calculate(Robot.kDefaultPeriod, state, goalState);
 
         double acceleration = (state.velocity - previousVelocity) / Robot.kDefaultPeriod;
-        double feedforwardVoltage = feedforwardController.calculate(currentPositionRad, state.velocity, acceleration);
+        double feedforwardVoltage = feedforwardController.calculate(currentPositionRad, state.velocity);
+//        double feedforwardVoltage = feedforwardController.calculate(currentPositionRad, state.velocity, acceleration);
         PIDController feedBackController = Math.abs(state.velocity) < 0.03
                 ? weakFeedBackController
                 :strongFeedBackController;
@@ -138,7 +146,23 @@ public class Arm extends SubsystemBase {
             volts = 0;
         else if (getArmAngle().lt(lowerLimit) && volts < 0)
             volts = 0;
-        volts = MathUtil.clamp(volts, -4, 4);
+        volts = MathUtil.clamp(volts, -3, 3);
         armMotor.setControl(new VoltageOut(volts));
+    }
+
+    public void setCurrentAssignment(Assignment assignment) {
+        this.currentAssignment = assignment;
+    }
+
+    public Assignment getCurrentAssignment() {
+        return this.currentAssignment;
+    }
+
+    public Command setAssignmentCoral() {
+        return run(() -> setCurrentAssignment(Assignment.CORAL));
+    }
+
+    public Command setAssignmentAlgae() {
+        return run(() -> setCurrentAssignment(Assignment.ALGAE));
     }
 }

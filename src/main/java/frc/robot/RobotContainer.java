@@ -7,7 +7,6 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.wpilibj2.command.Command;
@@ -54,15 +53,25 @@ public class RobotContainer {
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
-            // Drivetrain will execute this command periodically
-            drivetrain.applyRequest(() ->
-                drive.withVelocityX(-pilot.getY() * MaxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityY(-pilot.getX() * MaxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(-pilot.getZ() * MaxAngularRate) // Drive counterclockwise with negative X (left)
-            )
+                // Drivetrain will execute this command periodically
+                drivetrain.applyRequest(() ->
+                        drive.withVelocityX(-pilot.getY() * MaxSpeed) // Drive forward with negative Y (forward)
+                                .withVelocityY(-pilot.getX() * MaxSpeed) // Drive left with negative X (left)
+                                .withRotationalRate(-pilot.getZ() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+                )
         );
 
         pilot.trigger().whileTrue(drivetrain.applyRequest(() -> brake));
+
+        //set coral score
+        pilot.button(3).onTrue(Commands.sequence(
+                arm.setAssignmentCoral()
+        ));
+
+        //set aglae score
+        pilot.button(4).onTrue(Commands.sequence(
+                arm.setAssignmentAlgae()
+        ));
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
@@ -76,47 +85,73 @@ public class RobotContainer {
 
         drivetrain.registerTelemetry(logger::telemeterize);
 
+        // elevator.setDefaultCommand(elevator.applyRequest(this::getAxisY).andThen(Commands.waitUntil(() -> false)));
         elevator.setDefaultCommand(elevator.runSetpointUntilReached(Meters.zero()).andThen(Commands.waitUntil(() -> false)));
 
         arm.setDefaultCommand(
-        arm.moveToAndStayAtPosition(Arm.ArmPosition.IDLE));
+                arm.moveToAndStayAtPosition(Arm.ArmPosition.IDLE).onlyIf(() -> arm.getCurrentAssignment() == Arm.Assignment.CORAL && elevator.getCurrentHeight().in(Meter) <= 0.29));
         coralHolder.setDefaultCommand(coralHolder.runVoltage(0));
 
         //IDLE position L1
-        operator.a().onTrue(Commands.sequence( 
-            arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(()->elevator.getCurrentHeight().in(Meter) > 0.9),
-            elevator.runSetpointUntilReached(Meters.of(0.39)).onlyIf(()->elevator.getCurrentHeight().in(Meter) > 0.9),
-            arm.moveToAndStayAtPosition(ArmPosition.IDLE).alongWith(elevator.runSetpoint(Centimeters.of(3)))));
+        operator.a().onTrue(Commands.sequence(
+                arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.9),
+                elevator.runSetpointUntilReached(Meters.of(0.29)).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39),
+                arm.moveToAndStayAtPosition(ArmPosition.IDLE).alongWith(elevator.runSetpoint(Centimeters.of(3)))
+        ));
 
         //score position L2
         operator.x().onTrue(Commands.sequence(
-            arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(()->elevator.getCurrentHeight().in(Meter) > 1.0),  
-            arm.moveToPosition(ArmPosition.SCORE).onlyIf(()->elevator.getCurrentHeight().in(Meter) > 0.39 && elevator.getCurrentHeight().in(Meter) <= 0.39),    //score position L2
-            arm.moveToAndStayAtPosition(ArmPosition.SCORE)
-            .alongWith(elevator.runSetpoint(Meters.of(0.19)))));
+                arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 1.0),
+                arm.moveToPosition(ArmPosition.SCORE).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39 && elevator.getCurrentHeight().in(Meter) <= 0.39),    //score position L2
+                arm.moveToAndStayAtPosition(ArmPosition.SCORE)
+                        .alongWith(elevator.runSetpoint(Meters.of(0.19)))
+        ));
         //score position L3
         operator.y().onTrue(Commands.sequence(
-            arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(()->elevator.getCurrentHeight().in(Meter) > 0.39), 
-            arm.moveToPosition(ArmPosition.SCORE).onlyIf(()->elevator.getCurrentHeight().in(Meter) <= 0.39), 
-            arm.moveToAndStayAtPosition(ArmPosition.SCORE)
-            .alongWith(elevator.runSetpoint(Meters.of(0.59))))); 
-            
+                arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39),
+                arm.moveToPosition(ArmPosition.SCORE).onlyIf(() -> elevator.getCurrentHeight().in(Meter) <= 0.39),
+                arm.moveToAndStayAtPosition(ArmPosition.SCORE)
+                        .alongWith(elevator.runSetpoint(Meters.of(0.59)))
+        ));
+
         //score position L4
         operator.b().onTrue(Commands.sequence(
-            arm.moveToAndStayAtPosition(ArmPosition.SCORE_L4)
-                .alongWith(elevator.runSetpoint(Meters.of(1.21))))); 
-            elevator.runSetpointUntilReached(Meters.of(1.21));
+                arm.moveToAndStayAtPosition(ArmPosition.SCORE_L4)
+                        .alongWith(elevator.runSetpoint(Meters.of(1.21))
+                        )));
 
+        //intake
         operator.leftTrigger(0.5).whileTrue(coralHolder.intakeCoralSequence().raceWith(
-            arm.moveToAndStayAtPosition(Arm.ArmPosition.INTAKE),
-            elevator.runSetpoint(Centimeters.of(3))));
+                arm.moveToAndStayAtPosition(Arm.ArmPosition.INTAKE),
+                elevator.runSetpoint(Centimeters.of(1))
+        ));
+
+        //score
         operator.rightTrigger(0.5).whileTrue(coralHolder.scoreCoral());
-        // operator.leftBumper().onTrue(Commands.sequence(
-        //     elevator.elevatorTalon1.set(0.1),
-        //     elevator.elevatorTalon2.set(-0.1)));
-        // operator.rightBumper().onTrue(Commands.sequence(
-        //    elevator.elevatorTalon1.set(-0.1),
-        //    elevator.elevatorTalon2.set(0.1)));
+
+        //pick up algae
+        operator.leftBumper().onTrue(Commands.sequence(
+                arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.9),
+                elevator.runSetpointUntilReached(Meters.of(0.39)).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39),
+                arm.moveToAndStayAtPosition(ArmPosition.PICK_UP).alongWith(elevator.runSetpoint(Meters.of(0.19)))
+        ));
+
+        //push algae
+        operator.rightBumper().onTrue(Commands.sequence(
+                arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.9),
+                elevator.runSetpointUntilReached(Meters.of(0.39)).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39),
+                arm.moveToPosition(ArmPosition.PUSH).alongWith(elevator.runSetpoint(Centimeters.of(3)))
+        ));
+
+        //keep press back button and push Y axis to holder algae
+        operator.back().whileTrue(arm.moveToAndStayAtPosition(ArmPosition.PICK_UP).alongWith(elevator.applyRequest(this::getAxisY)));
+    }
+    private Double getAxisY() {
+        double axisY = -operator.getLeftY();
+        if (Math.abs(axisY) < 0.1) {
+            axisY = 0; 
+        }
+        return axisY;
     }
 
     public Command getAutonomousCommand() {

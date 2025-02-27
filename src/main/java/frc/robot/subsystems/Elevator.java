@@ -35,7 +35,7 @@ public class Elevator extends SubsystemBase {
     private static final int WHEEL_TEETH = 22;
     private static final double GEAR_RATIO = 84.0 / 12.0;
     private static final Distance LOWER_LIMIT = Meters.of(0.05);
-    private static final Distance HEIGHT_UPPER_LIMIT = Meters.of(1.23);
+    private static final Distance HEIGHT_UPPER_LIMIT = Meters.of(1.24);
 
     private static final Voltage minOutputVoltage = Volts.of(-2.0);
     private static final Voltage maxOutputVoltage = Volts.of(2.2);

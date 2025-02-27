@@ -8,7 +8,14 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
 
+import com.pathplanner.lib.config.RobotConfig;
+import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
@@ -21,8 +28,14 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.CoralHolder;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Arm.ArmPosition;
+import frc.robot.commands.ScoreSequence;
+
+import java.util.function.Supplier;
 
 public class RobotContainer {
+
+    private final PowerDistribution powerDistribution = new PowerDistribution(0, ModuleType.kCTRE);
+
     private double MaxSpeed = 3.5;
         //TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.5).in(RadiansPerSecond);
@@ -40,6 +53,8 @@ public class RobotContainer {
     private final CommandJoystick pilot = new CommandJoystick(1);
     private final CommandXboxController operator = new CommandXboxController(0);
 
+    private final SendableChooser<Command> autoChooser;
+
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     private final Elevator elevator = new Elevator();
     private final Arm arm = new Arm();
@@ -47,6 +62,12 @@ public class RobotContainer {
 
     public RobotContainer() {
         configureBindings();
+        //Add autonomousCommand
+        configureAutoCommands();
+        drivetrain.configureAuto();
+        autoChooser = AutoBuilder.buildAutoChooser();
+        SmartDashboard.putData("Select Auto", autoChooser);
+        SmartDashboard.putData(powerDistribution);
     }
 
     private void configureBindings() {
@@ -125,9 +146,13 @@ public class RobotContainer {
         //score position L4
         operator.b().onTrue(Commands.sequence(
                 arm.moveToAndStayAtPosition(ArmPosition.SCORE_L4)
-                        .alongWith(elevator.runSetpoint(Meters.of(1.21))
-                        )));
+                        .alongWith(elevator.runSetpoint(Meters.of(1.24)))
+        ));
 
+        //score position L4 up
+        pilot.button(11).onTrue(Commands.sequence(
+                coralHolder.prepareToScoreL4()
+        ));
         //intake
         operator.leftTrigger(0.5).whileTrue(Commands.sequence(
                 elevator.runSetpointUntilReached(Meters.of(0.29)).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39),
@@ -164,7 +189,12 @@ public class RobotContainer {
         return axisY;
     }
 
+    private void configureAutoCommands() {
+        NamedCommands.registerCommand("Coral Score", new ScoreSequence(elevator, arm, coralHolder));
+    }
+
     public Command getAutonomousCommand() {
-        return Commands.print("No autonomous command configured");
+        return autoChooser.getSelected();
+//        return Commands.print("No autonomous command configured");
     }
 }

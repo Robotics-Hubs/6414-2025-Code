@@ -32,11 +32,15 @@ import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Arm.ArmPosition;
 import frc.robot.commands.ScoreSequence;
 
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.inputs.LoggedPowerDistribution;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+
 import java.util.function.Supplier;
 
 public class RobotContainer {
 
-    private final PowerDistribution powerDistribution = new PowerDistribution(0, ModuleType.kCTRE);
+    private final LoggedPowerDistribution powerDistribution;
 
     private double MaxSpeed = 3.5;
         //TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -63,6 +67,8 @@ public class RobotContainer {
     private final CoralHolder coralHolder = new CoralHolder();
 
     public RobotContainer() {
+
+        powerDistribution = LoggedPowerDistribution.getInstance(0, ModuleType.kRev);
         //Add autonomousCommand
         configureAutoCommands();
 
@@ -71,7 +77,6 @@ public class RobotContainer {
         drivetrain.configureAuto();
         autoChooser = AutoBuilder.buildAutoChooser();
         SmartDashboard.putData("Select Auto", autoChooser);
-        SmartDashboard.putData(powerDistribution);
         Field2d field = new Field2d();
         SmartDashboard.putData("Field", field);
     }
@@ -139,20 +144,20 @@ public class RobotContainer {
                 arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 1.0),
                 arm.moveToPosition(ArmPosition.SCORE).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39 && elevator.getCurrentHeight().in(Meter) <= 0.39),    //score position L2
                 arm.moveToAndStayAtPosition(ArmPosition.SCORE)
-                        .alongWith(elevator.runSetpoint(Meters.of(0.19)))
+                        .alongWith(elevator.runSetpointUntilReached(Meters.of(0.198)).andThen(elevator.runSetpoint(Meters.of(0.19))))
         ));
         //score position L3
         operator.y().onTrue(Commands.sequence(
                 arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39),
                 arm.moveToPosition(ArmPosition.SCORE).onlyIf(() -> elevator.getCurrentHeight().in(Meter) <= 0.39),
                 arm.moveToAndStayAtPosition(ArmPosition.SCORE)
-                        .alongWith(elevator.runSetpoint(Meters.of(0.59)))
+                        .alongWith(elevator.runSetpointUntilReached(Meters.of(0.598)).andThen(elevator.runSetpoint(Meters.of(0.59))))
         ));
 
         //score position L4
         operator.b().onTrue(Commands.sequence(
                 arm.moveToAndStayAtPosition(ArmPosition.SCORE_L4)
-                        .alongWith(elevator.runSetpoint(Meters.of(1.24)))
+                        .alongWith(elevator.runSetpointUntilReached(Meters.of(1.24)).andThen(elevator.runSetpoint(Meters.of(1.232))))
         ));
 
         //score position L4 up
@@ -161,9 +166,9 @@ public class RobotContainer {
         ));
 
         //score position L4 up
-        pilot.button(12).onTrue(
-                getAutonomousCommand()
-        );
+//        pilot.button(12).onTrue(
+//                getAutonomousCommand()
+//        );
 
         //intake
         operator.leftTrigger(0.5).whileTrue(Commands.sequence(
@@ -202,12 +207,14 @@ public class RobotContainer {
     }
 
     private void configureAutoCommands() {
-        NamedCommands.registerCommand("startAuto", drivetrain.getPathPlannerCommandFromPathFile("RedStartMiddle"));
-        NamedCommands.registerCommand("coralScore", new ScoreSequence(elevator, arm, coralHolder));
+//        NamedCommands.registerCommand("startAuto", drivetrain.getPathPlannerCommandFromPathFile("RedStartMiddle"));
+//        NamedCommands.registerCommand("coralScore", new ScoreSequence(elevator, arm, coralHolder));
     }
 
     public Command getAutonomousCommand() {
-        return drivetrain.getPathPlannerCommandFromPathFile("RedStartMiddle");
+        String path = "New Path9";
+        Commands.print(path).schedule();
+        return drivetrain.getPathPlannerCommandFromPathFile(path);
 //        return autoChooser.getSelected();
 //        return Commands.print("No autonomous command configured");
     }

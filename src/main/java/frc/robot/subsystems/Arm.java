@@ -34,6 +34,7 @@ public class Arm extends SubsystemBase {
     public enum ArmPosition {
         IDLE(116),
         INTAKE(126),
+        UP_AND_DOWN(116),
         SCORE(106),
         RUN_UP(55),
         SCORE_L4(70),

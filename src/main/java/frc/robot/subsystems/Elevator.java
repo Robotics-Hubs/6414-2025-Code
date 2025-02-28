@@ -34,11 +34,11 @@ public class Elevator extends SubsystemBase {
     private static final Distance CHAIN_LENGTH = Inches.of(0.25);
     private static final int WHEEL_TEETH = 22;
     private static final double GEAR_RATIO = 84.0 / 12.0;
-    private static final Distance LOWER_LIMIT = Meters.of(0.05);
+    private static final Distance LOWER_LIMIT = Meters.of(0.07);
     private static final Distance HEIGHT_UPPER_LIMIT = Meters.of(1.24);
 
     private static final Voltage minOutputVoltage = Volts.of(-2.0);
-    private static final Voltage maxOutputVoltage = Volts.of(2.2);
+    private static final Voltage maxOutputVoltage = Volts.of(2.5);
 
     public final TalonFX elevatorTalon1 = new TalonFX(31);
     public final TalonFX elevatorTalon2 = new TalonFX(32);

@@ -10,10 +10,12 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.path.PathPlannerPath;
 
 import com.pathplanner.lib.config.RobotConfig;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -61,13 +63,17 @@ public class RobotContainer {
     private final CoralHolder coralHolder = new CoralHolder();
 
     public RobotContainer() {
-        configureBindings();
         //Add autonomousCommand
         configureAutoCommands();
+
+        configureBindings();
+
         drivetrain.configureAuto();
         autoChooser = AutoBuilder.buildAutoChooser();
         SmartDashboard.putData("Select Auto", autoChooser);
         SmartDashboard.putData(powerDistribution);
+        Field2d field = new Field2d();
+        SmartDashboard.putData("Field", field);
     }
 
     private void configureBindings() {
@@ -153,6 +159,12 @@ public class RobotContainer {
         pilot.button(11).onTrue(Commands.sequence(
                 coralHolder.prepareToScoreL4()
         ));
+
+        //score position L4 up
+        pilot.button(12).onTrue(
+                getAutonomousCommand()
+        );
+
         //intake
         operator.leftTrigger(0.5).whileTrue(Commands.sequence(
                 elevator.runSetpointUntilReached(Meters.of(0.29)).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39),
@@ -190,11 +202,13 @@ public class RobotContainer {
     }
 
     private void configureAutoCommands() {
-        NamedCommands.registerCommand("Coral Score", new ScoreSequence(elevator, arm, coralHolder));
+        NamedCommands.registerCommand("startAuto", drivetrain.getPathPlannerCommandFromPathFile("RedStartMiddle"));
+        NamedCommands.registerCommand("coralScore", new ScoreSequence(elevator, arm, coralHolder));
     }
 
     public Command getAutonomousCommand() {
-        return autoChooser.getSelected();
+        return drivetrain.getPathPlannerCommandFromPathFile("RedStartMiddle");
+//        return autoChooser.getSelected();
 //        return Commands.print("No autonomous command configured");
     }
 }

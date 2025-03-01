@@ -212,7 +212,7 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        String path = "New Path9";
+        String path = "New Path";
         Commands.print(path).schedule();
         return drivetrain.getPathPlannerCommandFromPathFile(path);
 //        return autoChooser.getSelected();

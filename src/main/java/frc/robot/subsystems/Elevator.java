@@ -20,6 +20,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Robot;
@@ -31,11 +32,11 @@ import static edu.wpi.first.units.Units.*;
 
 public class Elevator extends SubsystemBase {
     private static final Distance AT_REFERENCE_TOLERANCE = Centimeters.of(3);
-    private static final Distance CHAIN_LENGTH = Inches.of(0.25);
+    private static final Distance CHAIN_LENGTH = Inches.of(0.22);
     private static final int WHEEL_TEETH = 22;
     private static final double GEAR_RATIO = 84.0 / 12.0;
     private static final Distance LOWER_LIMIT = Meters.of(0.07);
-    private static final Distance HEIGHT_UPPER_LIMIT = Meters.of(1.24);
+    private static final Distance HEIGHT_UPPER_LIMIT = Meters.of(1.12);
 
     private static final Voltage minOutputVoltage = Volts.of(-2.0);
     private static final Voltage maxOutputVoltage = Volts.of(2.5);
@@ -138,6 +139,7 @@ public class Elevator extends SubsystemBase {
     }
 
     private boolean isHigherLimitReached() {
+//        Commands.print(String.format("%f",getCurrentHeight().in(Meter))).schedule();
         return getCurrentHeight().gte(HEIGHT_UPPER_LIMIT);
     }
 

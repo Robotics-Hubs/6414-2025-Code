@@ -319,8 +319,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
     private ChassisSpeeds getRobotRelativeSpeeds() {
         return this.getKinematics().toChassisSpeeds(this.getState().ModuleStates);
-//        SwerveControlParameters controlParameters = new SwerveControlParameters();
-//        return controlParameters.currentChassisSpeed;
     }
     private void driveRobotRelative(ChassisSpeeds speeds) {
         final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
@@ -370,6 +368,18 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         try{
             // Load the path you want to follow using its name in the GUI
             PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+
+            // Create a path following command using AutoBuilder. This will also trigger event markers.
+            return AutoBuilder.followPath(path);
+        } catch (Exception e) {
+            DriverStation.reportError("Big oops: " + e.getMessage(), e.getStackTrace());
+            return Commands.none();
+        }
+    }
+    public Command getPathPlannerCommandFromAutoFile(String autoName) {
+        try{
+            // Load the path you want to follow using its name in the GUI
+            PathPlannerPath path = PathPlannerPath.fromPathFile(autoName);
 
             // Create a path following command using AutoBuilder. This will also trigger event markers.
             return AutoBuilder.followPath(path);

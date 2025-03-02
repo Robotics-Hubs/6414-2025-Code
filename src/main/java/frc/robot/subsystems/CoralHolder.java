@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import au.grapplerobotics.LaserCan;
-import au.grapplerobotics.interfaces.LaserCanInterface;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
@@ -89,8 +88,9 @@ public class CoralHolder extends SubsystemBase {
     }
 
     public Command prepareToScoreL4() {
-        return runVoltage(-0.8)
-                .until(() -> !this.coralInPlace())
-                .finallyDo(() -> setVoltage(0.0));
+        return Commands.sequence(runVoltage(-0.8)
+                .until(() -> !this.coralInPlace()),
+                runVoltage(-0.5).withTimeout(0.4)
+                .finallyDo(() -> setVoltage(0.0)));
     }
 }

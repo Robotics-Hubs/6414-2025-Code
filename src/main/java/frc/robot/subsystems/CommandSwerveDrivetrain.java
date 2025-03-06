@@ -1,7 +1,9 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
+import static frc.robot.constants.DriveTrainConstants.DRIVE_KINEMATICS;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
@@ -36,6 +38,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
+import frc.robot.RobotState;
+import frc.robot.Telemetry;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.constants.DriveTrainConstants;
 
@@ -54,6 +58,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
+    /* Global alliance color */
+    private Alliance currentAllianceColor = Alliance.Blue;
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
@@ -139,6 +145,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         super(drivetrainConstants, modules);
         if (Utils.isSimulation()) {
             startSimThread();
+        } else {
+            setPerspectiveForward();
         }
     }
 
@@ -163,6 +171,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         super(drivetrainConstants, odometryUpdateFrequency, modules);
         if (Utils.isSimulation()) {
             startSimThread();
+        } else {
+            setPerspectiveForward();
         }
     }
 
@@ -195,7 +205,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         super(drivetrainConstants, odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation, modules);
         if (Utils.isSimulation()) {
             startSimThread();
+        } else {
+            setPerspectiveForward();
         }
+    }
+
+    public Rotation2d getFacing() {
+        return getPose().getRotation();
     }
 
     /**
@@ -230,27 +246,55 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
+    private final int countDownInit = 50;
+    private int countDown = countDownInit;
     @Override
     public void periodic() {
-        /*
-         * Periodically try to apply the operator perspective.
-         * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
-         * This allows us to correct the perspective in case the robot code restarts mid-match.
-         * Otherwise, only check and apply the operator perspective if the DS is disabled.
-         * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
-         */
+        setPerspectiveForward();
+        if (countDown > 0) {
+            countDown--;
+        }else {
+            RobotState.getInstance().updateAlerts();
+            Pose2d pose = RobotState.getInstance().getVisionPose();
+            Commands.print(String.format(
+                    "x :%f, y: %f, r: %f",
+                    pose.getX(),
+                    pose.getX(),
+                    pose.getRotation().getDegrees()
+            )).schedule();
+            countDown = countDownInit;
+        }
+    }
+    /*
+     * Periodically try to apply the operator perspective.
+     * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
+     * This allows us to correct the perspective in case the robot code restarts mid-match.
+     * Otherwise, only check and apply the operator perspective if the DS is disabled.
+     * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
+     */
+    private void setPerspectiveForward() {
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
-            DriverStation.getAlliance().ifPresent(allianceColor -> {
-                setOperatorPerspectiveForward(
-                    allianceColor == Alliance.Red
-                        ? kRedAlliancePerspectiveRotation
-                        : kBlueAlliancePerspectiveRotation
-                );
-                m_hasAppliedOperatorPerspective = true;
-            });
+//            if (DriverStation.getAlliance().isEmpty()) {
+//                currentAllianceColor = Alliance.Blue;
+//                setOperatorPerspectiveForward(kBlueAlliancePerspectiveRotation);
+//                m_hasAppliedOperatorPerspective = true;
+//            }else {
+                DriverStation.getAlliance().ifPresent(allianceColor -> {
+                    currentAllianceColor = allianceColor;
+                    setOperatorPerspectiveForward(
+                            allianceColor == Alliance.Red
+                                    ? kRedAlliancePerspectiveRotation
+                                    : kBlueAlliancePerspectiveRotation
+                    );
+                    m_hasAppliedOperatorPerspective = true;
+                });
+//            }
         }
     }
 
+    public Alliance getCurrentAllianceColor() {
+        return currentAllianceColor;
+    }
     private void startSimThread() {
         m_lastSimTime = Utils.getCurrentTimeSeconds();
 
@@ -314,10 +358,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 DriveTrainConstants.MODULE_TRANSLATIONS);
     }
 
-    private Pose2d getPose() {
-        return this.getState().Pose;
+    public Pose2d getPose() {
+        return getState().Pose;
     }
-    private ChassisSpeeds getRobotRelativeSpeeds() {
+
+    public void setPose(Pose2d pose) {
+        RobotState.getInstance().resetPose(pose);
+    }
+
+    public ChassisSpeeds getRobotRelativeSpeeds() {
         return this.getKinematics().toChassisSpeeds(this.getState().ModuleStates);
     }
     private void driveRobotRelative(ChassisSpeeds speeds) {
@@ -368,18 +417,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         try{
             // Load the path you want to follow using its name in the GUI
             PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
-
-            // Create a path following command using AutoBuilder. This will also trigger event markers.
-            return AutoBuilder.followPath(path);
-        } catch (Exception e) {
-            DriverStation.reportError("Big oops: " + e.getMessage(), e.getStackTrace());
-            return Commands.none();
-        }
-    }
-    public Command getPathPlannerCommandFromAutoFile(String autoName) {
-        try{
-            // Load the path you want to follow using its name in the GUI
-            PathPlannerPath path = PathPlannerPath.fromPathFile(autoName);
 
             // Create a path following command using AutoBuilder. This will also trigger event markers.
             return AutoBuilder.followPath(path);

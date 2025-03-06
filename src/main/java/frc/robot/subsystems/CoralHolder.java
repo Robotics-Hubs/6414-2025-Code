@@ -90,7 +90,7 @@ public class CoralHolder extends SubsystemBase {
     public Command prepareToScoreL4() {
         return Commands.sequence(runVoltage(-0.8)
                 .until(() -> !this.coralInPlace()),
-                runVoltage(-0.5).withTimeout(0.4)
+                runVoltage(-0.5).withTimeout(0.6)
                 .finallyDo(() -> setVoltage(0.0)));
     }
 }

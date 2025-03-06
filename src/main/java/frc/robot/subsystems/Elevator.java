@@ -36,7 +36,7 @@ public class Elevator extends SubsystemBase {
     private static final int WHEEL_TEETH = 22;
     private static final double GEAR_RATIO = 84.0 / 12.0;
     private static final Distance LOWER_LIMIT = Meters.of(0.07);
-    private static final Distance HEIGHT_UPPER_LIMIT = Meters.of(1.12);
+    private static final Distance HEIGHT_UPPER_LIMIT = Meters.of(1.118);
 
     private static final Voltage minOutputVoltage = Volts.of(-2.0);
     private static final Voltage maxOutputVoltage = Volts.of(2.5);
@@ -78,9 +78,17 @@ public class Elevator extends SubsystemBase {
         currentState = new TrapezoidProfile.State(0, 0);
         setpoint = Optional.empty();
     }
+    private final int countDownInit = 50;
+    private int countDown = countDownInit;
 
     @Override
     public void periodic() {
+//        if (countDown > 0) {
+//            countDown--;
+//        }else {
+//            Commands.print(String.format("Height: %f", getCurrentHeight().in(Meter))).schedule();
+//            countDown = countDownInit;
+//        }
         BaseStatusSignal.refreshAll(elevatorMotorPosition, motor1SupplyCurrent, motor2SupplyCurrent);
         double motorRotations = elevatorMotorPosition.getValue().in(Rotations);
         currentHeight = Meters.of(motorRotations / GEAR_RATIO * WHEEL_TEETH * CHAIN_LENGTH.in(Meters) * 2);

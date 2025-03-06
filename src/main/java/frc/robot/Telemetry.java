@@ -3,6 +3,7 @@ package frc.robot;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -92,10 +93,14 @@ public class Telemetry {
         driveTimestamp.set(state.Timestamp);
         driveOdometryFrequency.set(1.0 / state.OdometryPeriod);
 
+        RobotState.getInstance().resetPose(state.Pose);
+        RobotState.getInstance().addChassisSpeedsObservation(state.Speeds);
+
         /* Also write to log file */
         m_poseArray[0] = state.Pose.getX();
         m_poseArray[1] = state.Pose.getY();
         m_poseArray[2] = state.Pose.getRotation().getDegrees();
+
         for (int i = 0; i < 4; ++i) {
             m_moduleStatesArray[i*2 + 0] = state.ModuleStates[i].angle.getRadians();
             m_moduleStatesArray[i*2 + 1] = state.ModuleStates[i].speedMetersPerSecond;

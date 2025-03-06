@@ -11,6 +11,8 @@ import au.grapplerobotics.CanBridge;
 import com.pathplanner.lib.commands.FollowPathCommand;
 
 public class Robot extends TimedRobot {
+
+  public static final double defaultPeriodSecs = 0.02;
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;

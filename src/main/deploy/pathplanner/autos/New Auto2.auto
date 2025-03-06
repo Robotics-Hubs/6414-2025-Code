@@ -13,25 +13,7 @@
         {
           "type": "named",
           "data": {
-            "name": "Raise Up"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Aim At Score"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Coral Score"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Run Idle"
+            "name": "Raise Aim Score"
           }
         }
       ]

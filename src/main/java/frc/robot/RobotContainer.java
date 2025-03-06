@@ -14,6 +14,10 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import com.pathplanner.lib.config.RobotConfig;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -25,17 +29,27 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
+import frc.robot.autos.Auto;
+import frc.robot.commands.ReefAlignment;
+import frc.robot.constants.VisionConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.CoralHolder;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Arm.ArmPosition;
+import frc.robot.subsystems.vision.apriltags.AprilTagVision;
+import frc.robot.subsystems.vision.apriltags.AprilTagVisionIOReal;
+import frc.robot.subsystems.vision.apriltags.ApriltagVisionIOSim;
+import frc.robot.subsystems.vision.apriltags.PhotonCameraProperties;
+import frc.robot.utils.FieldMirroringUtils;
+
 
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.inputs.LoggedPowerDistribution;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 public class RobotContainer {
@@ -61,7 +75,10 @@ public class RobotContainer {
 
     private final SendableChooser<Command> autoChooser;
 
+    // Subsystems
+    public final AprilTagVision aprilTagVision;
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+
     private final Elevator elevator = new Elevator();
     private final Arm arm = new Arm();
     private final CoralHolder coralHolder = new CoralHolder();
@@ -69,6 +86,14 @@ public class RobotContainer {
     public RobotContainer() {
 
         powerDistribution = LoggedPowerDistribution.getInstance(0, ModuleType.kRev);
+
+        final List<PhotonCameraProperties> camerasProperties =
+                VisionConstants.photonVisionCameras; // load configs stored directly in VisionConstants.java
+        aprilTagVision = new AprilTagVision(new AprilTagVisionIOReal(camerasProperties), camerasProperties);
+
+        // set Starting pose
+        resetFieldAndOdometryForAuto(getStartingPoseAtBlueAlliance());
+
         //Add autonomousCommand
         configureAutoCommands();
 
@@ -117,14 +142,27 @@ public class RobotContainer {
                 arm.setAssignmentAlgae()
         ));
 
+        //score position L4 up
+        pilot.button(8).onTrue(Commands.sequence(
+                coralHolder.prepareToScoreL4()
+        ));
+
+        /* auto alignment left side*/
+        pilot.button(11).whileTrue(ReefAlignment.alignmentToBranch(
+                drivetrain, aprilTagVision, false, Commands::none));
+
+        /* auto alignment right side*/
+        pilot.button(5).whileTrue(ReefAlignment.alignmentToBranch(
+                drivetrain, aprilTagVision,  true, Commands::none));
+
         // reset the field-centric heading on left bumper press
-        operator.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+        operator.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
         drivetrain.registerTelemetry(logger::telemeterize);
 
         /*
           can not set default command, because clash with drive up and down, instead with button back + axis Y
-          elevator.setDefaultCommand(elevator.applyRequest(this::getAxisY).andThen(Commands.waitUntil(() -> false)));
+          elevator.setDefaultCommand(elevator.applyRequest(() -> -operator.getLeftY()).andThen(Commands.waitUntil(() -> false)));
           elevator.setDefaultCommand(elevator.runSetpointUntilReached(Meters.zero()).andThen(Commands.waitUntil(() -> false)));
         */
 
@@ -144,25 +182,20 @@ public class RobotContainer {
                 arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 1.0),
                 arm.moveToPosition(ArmPosition.SCORE).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39 && elevator.getCurrentHeight().in(Meter) <= 0.39),    //score position L2
                 arm.moveToAndStayAtPosition(ArmPosition.SCORE)
-                        .alongWith(elevator.runSetpointUntilReached(Meters.of(0.198)).andThen(elevator.runSetpoint(Meters.of(0.19))))
+                        .alongWith(elevator.runSetpointUntilReached(Meters.of(0.168)).andThen(elevator.runSetpoint(Meters.of(0.16))))
         ));
         //score position L3
         operator.y().onTrue(Commands.sequence(
                 arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39),
                 arm.moveToPosition(ArmPosition.SCORE).onlyIf(() -> elevator.getCurrentHeight().in(Meter) <= 0.39),
                 arm.moveToAndStayAtPosition(ArmPosition.SCORE)
-                        .alongWith(elevator.runSetpointUntilReached(Meters.of(0.598)).andThen(elevator.runSetpoint(Meters.of(0.59))))
+                        .alongWith(elevator.runSetpointUntilReached(Meters.of(0.55)).andThen(elevator.runSetpoint(Meters.of(0.54))))
         ));
 
         //score position L4
         operator.b().onTrue(Commands.sequence(
                 arm.moveToAndStayAtPosition(ArmPosition.SCORE_L4)
-                        .alongWith(elevator.runSetpointUntilReached(Meters.of(1.12)).andThen(elevator.runSetpoint(Meters.of(1.102))))
-        ));
-
-        //score position L4 up
-        pilot.button(11).onTrue(Commands.sequence(
-                coralHolder.prepareToScoreL4()
+                        .alongWith(elevator.runSetpointUntilReached(Meters.of(1.118)).andThen(elevator.runSetpoint(Meters.of(1.111))))
         ));
 
         //intake
@@ -191,14 +224,23 @@ public class RobotContainer {
         ));
 
         //keep press back button and push Y axis to holder algae
-        operator.back().whileTrue(arm.moveToAndStayAtPosition(ArmPosition.PICK_UP).alongWith(elevator.applyRequest(this::getAxisY)));
+        operator.back().whileTrue(arm.moveToAndStayAtPosition(ArmPosition.PICK_UP).alongWith(elevator.applyRequest(() -> -operator.getLeftY())));
     }
-    private Double getAxisY() {
-        double axisY = -operator.getLeftY();
-        if (Math.abs(axisY) < 0.1) {
-            axisY = 0; 
-        }
-        return axisY;
+
+    public Pose2d getStartingPoseAtBlueAlliance() {
+        Pose2d poseAtLeft = new Pose2d(7.3, 6.15, Rotation2d.fromDegrees(180));
+        return Auto.getRightSide() ? Auto.flipLeftRight(poseAtLeft) : poseAtLeft;
+    }
+
+    private void resetFieldAndOdometryForAuto(Pose2d robotStartingPoseAtBlueAlliance) {
+        final Pose2d startingPose = FieldMirroringUtils.toCurrentAlliancePose(robotStartingPoseAtBlueAlliance);
+
+        aprilTagVision
+                .focusOnTarget(-1, -1)
+                .withTimeout(0.1)
+                .alongWith(Commands.runOnce(() -> drivetrain.setPose(startingPose), drivetrain))
+                .ignoringDisable(true)
+                .schedule();
     }
 
     private void configureAutoCommands() {
@@ -206,15 +248,20 @@ public class RobotContainer {
         NamedCommands.registerCommand("Run Idle", arm.moveToPosition(ArmPosition.IDLE));
         NamedCommands.registerCommand("Raise Up", elevator.runSetpointUntilReached(Meters.of(0.19)));
         NamedCommands.registerCommand("Coral Score", coralHolder.scoreCoral());
+        NamedCommands.registerCommand("Raise Aim Score", elevator.runSetpointUntilReached(Meters.of(0.19))
+                .deadlineFor(Commands.waitSeconds(0.1))
+                .andThen(arm.moveToPosition(ArmPosition.SCORE))
+                .andThen(coralHolder.scoreCoral()).asProxy());
     }
 
     public Command getAutonomousCommand() {
         /* This method loads the auto when it is called, however, it is recommended
         to first load your paths/autos when code starts, then return the
         preloaded auto/path */
-        String auto = "New Auto1";
+        boolean isMirror = drivetrain.getCurrentAllianceColor() == DriverStation.Alliance.Red;
+        String auto = "New Auto2";
         Commands.print(auto).schedule();
-        return new PathPlannerAuto(auto);
+        return new PathPlannerAuto(auto, isMirror);
 
 //        String path = "New Path";
 //        Commands.print(path).schedule();

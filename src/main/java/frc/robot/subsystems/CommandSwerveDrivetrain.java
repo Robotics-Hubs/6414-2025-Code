@@ -251,19 +251,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     @Override
     public void periodic() {
         setPerspectiveForward();
-        if (countDown > 0) {
-            countDown--;
-        }else {
-            RobotState.getInstance().updateAlerts();
-            Pose2d pose = RobotState.getInstance().getVisionPose();
-            Commands.print(String.format(
-                    "x :%f, y: %f, r: %f",
-                    pose.getX(),
-                    pose.getX(),
-                    pose.getRotation().getDegrees()
-            )).schedule();
-            countDown = countDownInit;
-        }
+//        if (countDown > 0) {
+//            countDown--;
+//        }else {
+
+//            RobotState.getInstance().updateAlerts();
+//            Pose2d pose = RobotState.getInstance().getVisionPose();
+//            Commands.print(String.format(
+//                    "x :%f, y: %f, r: %f",
+//                    pose.getX(),
+//                    pose.getX(),
+//                    pose.getRotation().getDegrees()
+//            )).schedule();
+//            countDown = countDownInit;
+//        }
     }
     /*
      * Periodically try to apply the operator perspective.
@@ -274,21 +275,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      */
     private void setPerspectiveForward() {
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
-//            if (DriverStation.getAlliance().isEmpty()) {
-//                currentAllianceColor = Alliance.Blue;
-//                setOperatorPerspectiveForward(kBlueAlliancePerspectiveRotation);
-//                m_hasAppliedOperatorPerspective = true;
-//            }else {
-                DriverStation.getAlliance().ifPresent(allianceColor -> {
-                    currentAllianceColor = allianceColor;
-                    setOperatorPerspectiveForward(
-                            allianceColor == Alliance.Red
-                                    ? kRedAlliancePerspectiveRotation
-                                    : kBlueAlliancePerspectiveRotation
-                    );
-                    m_hasAppliedOperatorPerspective = true;
-                });
-//            }
+
+            DriverStation.getAlliance().ifPresent(allianceColor -> {
+                currentAllianceColor = allianceColor;
+                setOperatorPerspectiveForward(
+                        allianceColor == Alliance.Red
+                                ? kRedAlliancePerspectiveRotation
+                                : kBlueAlliancePerspectiveRotation
+                );
+                m_hasAppliedOperatorPerspective = true;
+            });
         }
     }
 

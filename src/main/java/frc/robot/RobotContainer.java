@@ -146,14 +146,54 @@ public class RobotContainer {
         pilot.button(8).onTrue(Commands.sequence(
                 coralHolder.prepareToScoreL4()
         ));
-
-        /* auto alignment left side*/
-        pilot.button(11).whileTrue(ReefAlignment.alignmentToBranch(
-                drivetrain, aprilTagVision, false, Commands::none));
-
-        /* auto alignment right side*/
-        pilot.button(5).whileTrue(ReefAlignment.alignmentToBranch(
-                drivetrain, aprilTagVision,  true, Commands::none));
+//
+//        /* auto alignment left side*/
+//        pilot.button(9).whileTrue(ReefAlignment.alignmentToBranch(
+//                drivetrain, aprilTagVision, 0,false, Commands::none));
+//
+//        /* auto alignment right side*/
+//        pilot.button(10).whileTrue(ReefAlignment.alignmentToBranch(
+//                drivetrain, aprilTagVision,  0,true, Commands::none));
+//
+//        /* auto alignment left side*/
+//        pilot.button(7).and(pilot.button(9)).whileTrue(ReefAlignment.alignmentToBranch(
+//                drivetrain, aprilTagVision, 1,false, Commands::none));
+//
+//        /* auto alignment right side*/
+//        pilot.button(7).and(pilot.button(10)).whileTrue(ReefAlignment.alignmentToBranch(
+//                drivetrain, aprilTagVision,  1,true, Commands::none));
+//
+//        /* auto alignment left side*/
+//        pilot.button(6).and(pilot.button(9)).whileTrue(ReefAlignment.alignmentToBranch(
+//                drivetrain, aprilTagVision, 2,false, Commands::none));
+//
+//        /* auto alignment right side*/
+//        pilot.button(6).and(pilot.button(10)).whileTrue(ReefAlignment.alignmentToBranch(
+//                drivetrain, aprilTagVision,  2,true, Commands::none));
+//
+//        /* auto alignment left side*/
+//        pilot.button(5).and(pilot.button(9)).whileTrue(ReefAlignment.alignmentToBranch(
+//                drivetrain, aprilTagVision, 3,false, Commands::none));
+//
+//        /* auto alignment right side*/
+//        pilot.button(5).and(pilot.button(10)).whileTrue(ReefAlignment.alignmentToBranch(
+//                drivetrain, aprilTagVision,  3,true, Commands::none));
+//
+//        /* auto alignment left side*/
+//        pilot.button(11).and(pilot.button(9)).whileTrue(ReefAlignment.alignmentToBranch(
+//                drivetrain, aprilTagVision, 4,false, Commands::none));
+//
+//        /* auto alignment right side*/
+//        pilot.button(11).and(pilot.button(10)).whileTrue(ReefAlignment.alignmentToBranch(
+//                drivetrain, aprilTagVision,  4,true, Commands::none));
+//
+//        /* auto alignment left side*/
+//        pilot.button(12).and(pilot.button(9)).whileTrue(ReefAlignment.alignmentToBranch(
+//                drivetrain, aprilTagVision, 5,false, Commands::none));
+//
+//        /* auto alignment right side*/
+//        pilot.button(12).and(pilot.button(10)).whileTrue(ReefAlignment.alignmentToBranch(
+//                drivetrain, aprilTagVision,  5,true, Commands::none));
 
         // reset the field-centric heading on left bumper press
         operator.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));

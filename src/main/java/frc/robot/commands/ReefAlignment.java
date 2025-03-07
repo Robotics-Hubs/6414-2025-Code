@@ -139,8 +139,10 @@ public class ReefAlignment {
     public static Command alignmentToBranch(
             CommandSwerveDrivetrain drive,
             AprilTagVision aprilTagVision,
+            Integer reefIndex,
             boolean rightSide,
             Supplier<Command> toRunAtPreciseAlignment) {
+        selectReefPart(reefIndex);
         return Commands.deferredProxy(() -> AutoAlignment.pathFindAndAutoAlign(
                         drive,
                         aprilTagVision,

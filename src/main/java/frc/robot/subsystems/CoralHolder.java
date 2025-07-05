@@ -74,17 +74,30 @@ public class CoralHolder extends SubsystemBase {
 
     public Command intakeCoralSequence() {
         return Commands.sequence(
-                runVoltage(1.5).until(this::hasCoral),
+                runVoltage(1).until(this::hasCoral),//ori 1.5
                 runVoltage(-0.5).withTimeout(0.1),
                 runVoltage(0.6).until(this::coralInPlace))
                 .finallyDo(() -> setVoltage(0.0))
                 .onlyIf(() -> !this.coralInPlace());
     }
 
+    public Command pushback() {
+        return runVoltage(-0.2)
+                .finallyDo(() -> setVoltage(0.0));
+    }
+
     public Command scoreCoral() {
         return runVoltage(1.5)
-                .until(() -> !this.hasCoral())
+                // .until(() -> !this.hasCoral())
                 .finallyDo(() -> setVoltage(0.0));
+    }
+
+    public Command Autoscore() {
+        return runVoltage(1.5).finallyDo(() -> setVoltage(0));
+    }
+    
+    public Command pickalgae(){
+        return runVoltage(-0.1).finallyDo(() -> setVoltage(0.0));
     }
 
     public Command prepareToScoreL4() {

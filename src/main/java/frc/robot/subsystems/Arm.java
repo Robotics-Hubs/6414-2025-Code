@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -33,13 +34,14 @@ public class Arm extends SubsystemBase {
 
     public enum ArmPosition {
         IDLE(116),
-        INTAKE(126),
+        INTAKE(138),
         UP_AND_DOWN(116),
-        SCORE(106),
+        SCORE(100),//to avoid hitting the elevator
         RUN_UP(55),
-        SCORE_L4(70),
-        PICK_UP(35),
-        PUSH(-40);
+        SCORE_L4(76),
+        PICK_UP(16),
+        PUSH(-40),
+        L4up(106);
 
         private final Angle angle;
         ArmPosition(double degrees) {
@@ -102,6 +104,13 @@ public class Arm extends SubsystemBase {
         return moveToAndStayAtPosition(armPosition)
                 .until(this::atReference);
     }
+
+    // public Command moveup(){
+    //     return moveToAndStayAtPosition(L4up);
+    // }
+    // public Command movedown(){
+    //     return moveToAndStayAtPosition(L4down);
+    // }
 
     @Override
     public void periodic() {

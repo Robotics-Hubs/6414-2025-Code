@@ -127,7 +127,7 @@ public class RobotState {
 
         previousVisionResultTimeStamp = observation.timestamp();
     }
-    private final int countDownInit = 1000;
+    private final int countDownInit = 50;
     private int countDown = countDownInit;
     private Pose2d addVisionObservationToEstimator(
             RobotMultiTagPoseEstimator.VisionObservation observation,
@@ -137,12 +137,12 @@ public class RobotState {
 //        if (countDown > 0) {
 //            countDown--;
 //        }else {
-//            Commands.print(String.format(
-//                    "Vision x :%f, y: %f, r: %f",
-//                    estimatorPose.getX(),
-//                    estimatorPose.getX(),
-//                    estimatorPose.getRotation().getDegrees()
-//            )).schedule();
+//        Commands.print(String.format(
+//                "Vision x :%f, y: %f, r: %f",
+//                estimatorPose.getX(),
+//                estimatorPose.getX(),
+//                estimatorPose.getRotation().getDegrees()
+//        )).schedule();
 //        }
         // sample --> odometryPose transform and backwards of that
         var sampleToOdometryTransform = new Transform2d(odometryPoseSample, odometryPoseSensorLess);

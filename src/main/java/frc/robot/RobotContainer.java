@@ -17,6 +17,8 @@ import com.pathplanner.lib.config.RobotConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
@@ -56,7 +58,7 @@ public class RobotContainer {
 
     private final LoggedPowerDistribution powerDistribution;
 
-    private double MaxSpeed = 3.5;
+    private double MaxSpeed = 4;
         //TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.5).in(RadiansPerSecond);
         // RotationsPerSecond.of(1.2).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
@@ -125,7 +127,10 @@ public class RobotContainer {
         // joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         // joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
-        pilot.trigger().whileTrue(drivetrain.applyRequest(() -> brake));
+        pilot.trigger().whileTrue(
+                coralHolder.Autoscore().
+                alongWith(arm.moveToAndStayAtPosition(ArmPosition.L4up))
+        );
 
         //hold algae
         pilot.button(2).onTrue(Commands.sequence(
@@ -146,54 +151,18 @@ public class RobotContainer {
         pilot.button(8).onTrue(Commands.sequence(
                 coralHolder.prepareToScoreL4()
         ));
-//
-//        /* auto alignment left side*/
-//        pilot.button(9).whileTrue(ReefAlignment.alignmentToBranch(
-//                drivetrain, aprilTagVision, 0,false, Commands::none));
-//
-//        /* auto alignment right side*/
-//        pilot.button(10).whileTrue(ReefAlignment.alignmentToBranch(
-//                drivetrain, aprilTagVision,  0,true, Commands::none));
-//
-//        /* auto alignment left side*/
-//        pilot.button(7).and(pilot.button(9)).whileTrue(ReefAlignment.alignmentToBranch(
-//                drivetrain, aprilTagVision, 1,false, Commands::none));
-//
-//        /* auto alignment right side*/
-//        pilot.button(7).and(pilot.button(10)).whileTrue(ReefAlignment.alignmentToBranch(
-//                drivetrain, aprilTagVision,  1,true, Commands::none));
-//
-//        /* auto alignment left side*/
-//        pilot.button(6).and(pilot.button(9)).whileTrue(ReefAlignment.alignmentToBranch(
-//                drivetrain, aprilTagVision, 2,false, Commands::none));
-//
-//        /* auto alignment right side*/
-//        pilot.button(6).and(pilot.button(10)).whileTrue(ReefAlignment.alignmentToBranch(
-//                drivetrain, aprilTagVision,  2,true, Commands::none));
-//
-//        /* auto alignment left side*/
-//        pilot.button(5).and(pilot.button(9)).whileTrue(ReefAlignment.alignmentToBranch(
-//                drivetrain, aprilTagVision, 3,false, Commands::none));
-//
-//        /* auto alignment right side*/
-//        pilot.button(5).and(pilot.button(10)).whileTrue(ReefAlignment.alignmentToBranch(
-//                drivetrain, aprilTagVision,  3,true, Commands::none));
-//
-//        /* auto alignment left side*/
-//        pilot.button(11).and(pilot.button(9)).whileTrue(ReefAlignment.alignmentToBranch(
-//                drivetrain, aprilTagVision, 4,false, Commands::none));
-//
-//        /* auto alignment right side*/
-//        pilot.button(11).and(pilot.button(10)).whileTrue(ReefAlignment.alignmentToBranch(
-//                drivetrain, aprilTagVision,  4,true, Commands::none));
-//
-//        /* auto alignment left side*/
-//        pilot.button(12).and(pilot.button(9)).whileTrue(ReefAlignment.alignmentToBranch(
-//                drivetrain, aprilTagVision, 5,false, Commands::none));
-//
-//        /* auto alignment right side*/
-//        pilot.button(12).and(pilot.button(10)).whileTrue(ReefAlignment.alignmentToBranch(
-//                drivetrain, aprilTagVision,  5,true, Commands::none));
+
+        pilot.button(9).onTrue(Commands.sequence(
+                coralHolder.pickalgae()
+        ));
+
+        /* auto alignment left side*/
+        // pilot.button(11).whileTrue(ReefAlignment.alignmentToBranch(
+        //         drivetrain, aprilTagVision, false, Commands::none));
+
+        // /* auto alignment right side*/
+        // pilot.button(5).whileTrue(ReefAlignment.alignmentToBranch(
+        //         drivetrain, aprilTagVision,  true, Commands::none));
 
         // reset the field-centric heading on left bumper press
         operator.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
@@ -234,6 +203,8 @@ public class RobotContainer {
 
         //score position L4
         operator.b().onTrue(Commands.sequence(
+                // arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39)),
+                // arm.moveToPosition(ArmPosition.SCORE_L4).onlyIf(() -> elevator.getCurrentHeight().in(Meter) <= 0.39),
                 arm.moveToAndStayAtPosition(ArmPosition.SCORE_L4)
                         .alongWith(elevator.runSetpointUntilReached(Meters.of(1.118)).andThen(elevator.runSetpoint(Meters.of(1.111))))
         ));
@@ -252,8 +223,8 @@ public class RobotContainer {
         //pick up algae
         operator.leftBumper().onTrue(Commands.sequence(
                 arm.moveToPosition(ArmPosition.RUN_UP).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.9),
-                elevator.runSetpointUntilReached(Meters.of(0.39)).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39),
-                arm.moveToAndStayAtPosition(ArmPosition.PICK_UP).alongWith(elevator.runSetpoint(Meters.of(0.19)))
+                elevator.runSetpointUntilReached(Meters.of(0.39)).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39),//ori0.39
+                arm.moveToAndStayAtPosition(ArmPosition.PICK_UP).alongWith(elevator.runSetpoint(Meters.of(0.1)))
         ));
 
         //push algae
@@ -263,8 +234,12 @@ public class RobotContainer {
                 arm.moveToPosition(ArmPosition.PUSH).alongWith(elevator.runSetpoint(Centimeters.of(3)))
         ));
 
+        operator.povUp().onTrue(Commands.sequence(
+                coralHolder.pushback()
+        ));
+
         //keep press back button and push Y axis to holder algae
-        operator.back().whileTrue(arm.moveToAndStayAtPosition(ArmPosition.PICK_UP).alongWith(elevator.applyRequest(() -> -operator.getLeftY())));
+        operator.back().whileTrue(arm.moveToAndStayAtPosition(ArmPosition.PICK_UP).alongWith(elevator.applyRequest(() -> -operator.getRightY())));
     }
 
     public Pose2d getStartingPoseAtBlueAlliance() {
@@ -286,12 +261,17 @@ public class RobotContainer {
     private void configureAutoCommands() {
         NamedCommands.registerCommand("Aim At Score", arm.moveToPosition(ArmPosition.SCORE));
         NamedCommands.registerCommand("Run Idle", arm.moveToPosition(ArmPosition.IDLE));
-        NamedCommands.registerCommand("Raise Up", elevator.runSetpointUntilReached(Meters.of(0.19)));
+        NamedCommands.registerCommand("Raise Up", elevator.runSetpointUntilReached(Meters.of(0.54)));
         NamedCommands.registerCommand("Coral Score", coralHolder.scoreCoral());
-        NamedCommands.registerCommand("Raise Aim Score", elevator.runSetpointUntilReached(Meters.of(0.19))
-                .deadlineFor(Commands.waitSeconds(0.1))
+        NamedCommands.registerCommand("Raise Aim Score", elevator.runSetpointUntilReached(Meters.of(0.54))
+                .deadlineFor(Commands.waitSeconds(1))
                 .andThen(arm.moveToPosition(ArmPosition.SCORE))
                 .andThen(coralHolder.scoreCoral()).asProxy());
+        NamedCommands.registerCommand("Pick Coral From Human", Commands.sequence(
+                elevator.runSetpointUntilReached(Meters.of(0.29)).onlyIf(() -> elevator.getCurrentHeight().in(Meter) > 0.39),
+                coralHolder.intakeCoralSequence().raceWith(
+                arm.moveToAndStayAtPosition(Arm.ArmPosition.INTAKE),
+                elevator.runSetpoint(Centimeters.of(0)))));
     }
 
     public Command getAutonomousCommand() {
@@ -309,5 +289,12 @@ public class RobotContainer {
 
 //        return autoChooser.getSelected();
 //        return Commands.print("No autonomous command configured");
+        
+//         SwerveRequest fwd = new SwerveRequest.RobotCentric().withVelocityX(0.5);
+//         SwerveRequest stop = new SwerveRequest.Idle();
+//         return drivetrain.applyRequest(() -> fwd)
+//                 .withTimeout(2.5)
+//                 .andThen(drivetrain.applyRequest(() -> stop))
+//                 .withTimeout(11);
     }
 }

@@ -31,6 +31,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -251,20 +252,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     @Override
     public void periodic() {
         setPerspectiveForward();
-//        if (countDown > 0) {
-//            countDown--;
-//        }else {
-
-//            RobotState.getInstance().updateAlerts();
-//            Pose2d pose = RobotState.getInstance().getVisionPose();
-//            Commands.print(String.format(
-//                    "x :%f, y: %f, r: %f",
-//                    pose.getX(),
-//                    pose.getX(),
-//                    pose.getRotation().getDegrees()
-//            )).schedule();
-//            countDown = countDownInit;
-//        }
+        if (countDown > 0) {
+            countDown--;
+        }else {
+            RobotState.getInstance().updateAlerts();
+            Pose2d pose = RobotState.getInstance().getVisionPose();
+            Commands.print(String.format(
+                    "x :%f, y: %f, r: %f",
+                    pose.getX(),
+                    pose.getX(),
+                    pose.getRotation().getDegrees()
+            )).schedule();
+            countDown = countDownInit;
+        }
     }
     /*
      * Periodically try to apply the operator perspective.
@@ -275,16 +275,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      */
     private void setPerspectiveForward() {
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
-
-            DriverStation.getAlliance().ifPresent(allianceColor -> {
-                currentAllianceColor = allianceColor;
-                setOperatorPerspectiveForward(
-                        allianceColor == Alliance.Red
-                                ? kRedAlliancePerspectiveRotation
-                                : kBlueAlliancePerspectiveRotation
-                );
-                m_hasAppliedOperatorPerspective = true;
-            });
+//            if (DriverStation.getAlliance().isEmpty()) {
+//                currentAllianceColor = Alliance.Blue;
+//                setOperatorPerspectiveForward(kBlueAlliancePerspectiveRotation);
+//                m_hasAppliedOperatorPerspective = true;
+//            }else {
+                DriverStation.getAlliance().ifPresent(allianceColor -> {
+                    currentAllianceColor = allianceColor;
+                    setOperatorPerspectiveForward(
+                            allianceColor == Alliance.Red
+                                    ? kRedAlliancePerspectiveRotation
+                                    : kBlueAlliancePerspectiveRotation
+                    );
+                    m_hasAppliedOperatorPerspective = true;
+                });
+//            }
         }
     }
 

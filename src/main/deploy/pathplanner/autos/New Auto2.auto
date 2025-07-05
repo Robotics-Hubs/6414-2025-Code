@@ -7,13 +7,49 @@
         {
           "type": "path",
           "data": {
-            "pathName": "New Path"
+            "pathName": "出生点到珊瑚礁"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Raise Aim Score"
+            "name": "Raise Up"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Coral Score"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "珊瑚礁到人类"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Pick Coral From Human"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "人类到珊瑚礁"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Raise Up"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Coral Score"
           }
         }
       ]

@@ -56,9 +56,4 @@ public class DriveTrainConstants {
 
     public static final SwerveDriveKinematics DRIVE_KINEMATICS = new SwerveDriveKinematics(MODULE_TRANSLATIONS);
 
-    /* dead configs, don't change them */
-    public static final int ODOMETRY_CACHE_CAPACITY = 10;
-    public static final double ODOMETRY_FREQUENCY = 250;
-    public static final double ODOMETRY_WAIT_TIMEOUT_SECONDS = 0.02;
-    public static final int SIMULATION_TICKS_IN_1_PERIOD = 6;
 }

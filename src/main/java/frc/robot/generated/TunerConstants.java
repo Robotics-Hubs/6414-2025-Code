@@ -24,13 +24,13 @@ public class TunerConstants {
     // The steer motor uses any SwerveModule.SteerRequestType control request with the
     // output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
     private static final Slot0Configs steerGains = new Slot0Configs()
-        .withKP(100).withKI(0).withKD(0.5)
-        .withKS(0.1).withKV(2.33).withKA(0)
+        .withKP(70).withKI(0).withKD(0.5)//ori 0.5, KV 2.33
+        .withKS(0.1).withKV(1.33).withKA(0)
         .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
     // When using closed-loop control, the drive motor uses the control
     // output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
     private static final Slot0Configs driveGains = new Slot0Configs()
-        .withKP(1).withKI(0).withKD(0)
+        .withKP(0).withKI(0).withKD(0)
         .withKS(0).withKV(0.124);
 
     // The closed-loop output type to use for the steer motors;
@@ -47,7 +47,7 @@ public class TunerConstants {
 
     // The remote sensor feedback type to use for the steer motors;
     // When not Pro-licensed, Fused*/Sync* automatically fall back to Remote*
-    private static final SteerFeedbackType kSteerFeedbackType = SteerFeedbackType.FusedCANcoder;
+    private static final SteerFeedbackType kSteerFeedbackType = SteerFeedbackType.RemoteCANcoder;
 
     // The stator current at which the wheels start to slip;
     // This needs to be tuned to your individual robot
@@ -57,6 +57,12 @@ public class TunerConstants {
     // Some configs will be overwritten; check the `with*InitialConfigs()` API documentation.
     private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration();
     private static final TalonFXConfiguration steerInitialConfigs = new TalonFXConfiguration()
+        .withMotionMagic(new MotionMagicConfigs()
+        .withMotionMagicCruiseVelocity(40)  // 降低最大转速（原为80 RPM）
+        .withMotionMagicAcceleration(20)    // 降低加速度（原为40 RPM/s）
+        )
+        .withClosedLoopRamps(new ClosedLoopRampsConfigs())
+
         .withCurrentLimits(
             new CurrentLimitsConfigs()
                 // Swerve azimuth does not require much torque output, so we can set a relatively low
@@ -129,7 +135,7 @@ public class TunerConstants {
     private static final int kFrontLeftDriveMotorId = 21;
     private static final int kFrontLeftSteerMotorId = 1;
     private static final int kFrontLeftEncoderId = 51;
-    private static final Angle kFrontLeftEncoderOffset = Rotations.of(-0.484572265625);
+    private static final Angle kFrontLeftEncoderOffset = Rotations.of(-0.446533203125);
     private static final boolean kFrontLeftSteerMotorInverted = true;
     private static final boolean kFrontLeftEncoderInverted = false;
 
@@ -140,7 +146,7 @@ public class TunerConstants {
     private static final int kFrontRightDriveMotorId = 22;
     private static final int kFrontRightSteerMotorId = 2;
     private static final int kFrontRightEncoderId = 52;
-    private static final Angle kFrontRightEncoderOffset = Rotations.of(-0.478408203125);
+    private static final Angle kFrontRightEncoderOffset = Rotations.of(-0.405517578125);
     private static final boolean kFrontRightSteerMotorInverted = true;
     private static final boolean kFrontRightEncoderInverted = false;
 
@@ -151,7 +157,7 @@ public class TunerConstants {
     private static final int kBackLeftDriveMotorId = 23;
     private static final int kBackLeftSteerMotorId = 3;
     private static final int kBackLeftEncoderId = 53;
-    private static final Angle kBackLeftEncoderOffset = Rotations.of(0.448055859375);
+    private static final Angle kBackLeftEncoderOffset = Rotations.of(0.436279296875);
     private static final boolean kBackLeftSteerMotorInverted = true;
     private static final boolean kBackLeftEncoderInverted = false;
 
@@ -162,7 +168,7 @@ public class TunerConstants {
     private static final int kBackRightDriveMotorId = 24;
     private static final int kBackRightSteerMotorId = 4;
     private static final int kBackRightEncoderId = 54;
-    private static final Angle kBackRightEncoderOffset = Rotations.of(0.479330078125);
+    private static final Angle kBackRightEncoderOffset = Rotations.of(0.47900390625);
     private static final boolean kBackRightSteerMotorInverted = true;
     private static final boolean kBackRightEncoderInverted = false;
 
